@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { useState } from 'react';
 
 
@@ -29,6 +29,7 @@ export default function Home() {
 
   const handleSignIn = () =>{
     const auth = getAuth();
+
     signInWithPopup(auth, provider)
     .then((res) => {
     const {displayName, email} = res.user;
@@ -39,6 +40,21 @@ export default function Home() {
     }
     setUser(currentUser);
   })
+  }
+  const handleSignOut = () =>{
+    const auth = getAuth();
+    signOut(auth)
+    .then(res => {
+      const currentUser = {
+        name: '',
+        email: '',
+        isLoggedIn: false
+      }
+      setUser(currentUser);
+      
+    }).catch((error) => {
+      console.log(error)
+    });
   }
 
   return (
@@ -53,6 +69,7 @@ export default function Home() {
         {user.isLoggedIn ? <div>
             <h2>Welcome Mr. {user.name}</h2>
             <h4>your email is {user.email}</h4>
+            <button onClick={handleSignOut}>Sign Out</button>
           </div> :
           <div>
             <h1 className={styles.title}>
@@ -60,7 +77,6 @@ export default function Home() {
             </h1>
             <button onClick={handleSignIn}>Sign In</button>
           </div>
-
         }
         
         {/* <h1 className={styles.title}>
