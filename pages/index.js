@@ -28,8 +28,8 @@ export default function Home() {
   const provider = new GoogleAuthProvider();
 
   const handleSignIn = () =>{
+// sign in
     const auth = getAuth();
-
     signInWithPopup(auth, provider)
     .then((res) => {
     const {displayName, email} = res.user;
@@ -41,6 +41,8 @@ export default function Home() {
     setUser(currentUser);
   })
   }
+
+  // sign out
   const handleSignOut = () =>{
     const auth = getAuth();
     signOut(auth)
