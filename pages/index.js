@@ -11,8 +11,9 @@ import { useState } from 'react';
 export default function Home() {
   const [user, setUser] = useState({
     isLoggedIn: false,
-    name:'',
-    email:''
+    name: '',
+    email: '',
+    password: ''
   })
 
   const firebaseConfig = {
@@ -23,40 +24,65 @@ export default function Home() {
     messagingSenderId: "451585652973",
     appId: "1:451585652973:web:ea29440e5804ec0fb5f4e4"
   };
-  
+
   const app = initializeApp(firebaseConfig);
   const provider = new GoogleAuthProvider();
 
-  const handleSignIn = () =>{
-// sign in
+  const handleSignIn = () => {
+    // sign in
     const auth = getAuth();
     signInWithPopup(auth, provider)
-    .then((res) => {
-    const {displayName, email} = res.user;
-    const currentUser = {
-      name: displayName,
-      email: email,
-      isLoggedIn: true
-    }
-    setUser(currentUser);
-  })
+      .then((res) => {
+        const { displayName, email } = res.user;
+        const currentUser = {
+          name: displayName,
+          email: email,
+          isLoggedIn: true
+        }
+        setUser(currentUser);
+      })
   }
 
   // sign out
-  const handleSignOut = () =>{
+  const handleSignOut = () => {
     const auth = getAuth();
     signOut(auth)
-    .then(res => {
-      const currentUser = {
-        name: '',
-        email: '',
-        isLoggedIn: false
-      }
-      setUser(currentUser);
-      
-    }).catch((error) => {
-      console.log(error)
-    });
+      .then(res => {
+        const currentUser = {
+          name: '',
+          email: '',
+          isLoggedIn: false
+        }
+        setUser(currentUser);
+
+      }).catch((error) => {
+        console.log(error)
+      });
+  }
+
+  // handle submit
+  const handleSubmit = () => {
+
+  }
+  // on change
+  const handleChange = (e) => {
+    let isFormValid;
+    if (e.target.name === 'email') {
+      isFormValid = /\S+@\S+\.\S+/.test(e.target.value);
+    }
+    if (e.target.name === 'password') {
+      const validPass = e.target.value.length > 6;
+      const passHasNumber = /\d/.test(e.target.value);
+      isFormValid = validPass && passHasNumber;
+    }
+    else {
+      isFormValid = true;
+    }
+    if (isFormValid) {
+      const newUserInfo = { ...user }
+      newUserInfo[e.target.name] = e.target.value;
+      setUser(newUserInfo)
+    }
   }
 
   return (
@@ -69,28 +95,35 @@ export default function Home() {
 
       <main className={styles.main}>
         {user.isLoggedIn ? <div>
-            <h2>Welcome Mr. {user.name}</h2>
-            <h4>your email is {user.email}</h4>
-            <button onClick={handleSignOut}>Sign Out</button>
-          </div> :
+          <h2>Welcome Mr. {user.name}</h2>
+          <h4>your email is {user.email}</h4>
+          <button onClick={handleSignOut}>Sign Out</button>
+        </div> :
           <div>
             <h1 className={styles.title}>
               Welcome to <a href="https://nextjs.org">Next.js!</a>
             </h1>
-            <button onClick={handleSignIn}>Sign In</button>
+            <br />
+            {/* ==== testing state ==== */}
+            <p>Name: {user.name}</p>
+            <p>Email: {user.email}</p>
+            <p>Password: {user.password}</p>
+            <form onSubmit={handleSubmit}>
+              <input onBlur={handleChange} type="text" name="name" placeholder='Your Name' required />
+              <br />
+              <input onBlur={handleChange} type="email" name="email" placeholder='email' required />
+              <br />
+              <input onBlur={handleChange} type="password" name="password" placeholder='password' required />
+              <br />
+              <input type="submit" name="submit" value='submit' />
+            </form>
+            <br />
+            <p>or</p>
+            <br />
+            <button onClick={handleSignIn}>Sign In with google</button>
           </div>
         }
-        
-        {/* <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-        <button onClick={handleSignIn}>Sign In</button>
-        {
-          user && <div>
-            <h2>Welcome Mr. {user.name}</h2>
-            <h4>your email is {user.email}</h4>
-          </div>
-        } */}
+
       </main>
     </div>
   )
