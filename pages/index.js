@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from 'react';
 
 
@@ -13,7 +13,9 @@ export default function Home() {
     isLoggedIn: false,
     name: '',
     email: '',
-    password: ''
+    password: '',
+    error: '',
+    success: false
   })
 
   const firebaseConfig = {
@@ -61,8 +63,24 @@ export default function Home() {
   }
 
   // handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    if(user.email && user.password){
+      const auth = getAuth();
+      createUserWithEmailAndPassword(auth, user.email, user.password)
+      .then(res => {
+        const newUserInfo = {...user}
+        newUserInfo.success = true;
+        setUser(newUserInfo);
+      })
+        .catch((error) => {
+          const newUserInfo = {...user}
+          newUserInfo.success = false;
+          newUserInfo.error = "Email Already Used, Try another one.";
+          setUser(newUserInfo)
+        });
+    }
 
+    e.preventDefault();
   }
   // on change
   const handleChange = (e) => {
@@ -105,9 +123,9 @@ export default function Home() {
             </h1>
             <br />
             {/* ==== testing state ==== */}
-            <p>Name: {user.name}</p>
+            {/* <p>Name: {user.name}</p>
             <p>Email: {user.email}</p>
-            <p>Password: {user.password}</p>
+            <p>Password: {user.password}</p> */}
             <form onSubmit={handleSubmit}>
               <input onBlur={handleChange} type="text" name="name" placeholder='Your Name' required />
               <br />
@@ -120,6 +138,7 @@ export default function Home() {
             <br />
             <p>or</p>
             <br />
+            {user.success ? <p style={{color: 'green'}}>Success !!!</p> : <p style={{color: 'red'}}>{user.error}</p>}
             <button onClick={handleSignIn}>Sign In with google</button>
           </div>
         }
