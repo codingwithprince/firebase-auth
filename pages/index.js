@@ -2,13 +2,14 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithPopup,signInWithEmailAndPassword, updateProfile, GoogleAuthProvider, signOut, createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from 'react';
 
 
 
 
 export default function Home() {
+  const [newUser, setNewUser] = useState(false)
   const [user, setUser] = useState({
     isLoggedIn: false,
     name: '',
@@ -29,6 +30,15 @@ export default function Home() {
 
   const app = initializeApp(firebaseConfig);
   const provider = new GoogleAuthProvider();
+//  update user name
+  const updateUser = (name) =>{
+    const auth = getAuth();
+      updateProfile(auth.currentUser, {
+        displayName: name
+      }).catch((error) => {
+        console.log(error);
+      });
+  }
 
   const handleSignIn = () => {
     // sign in
@@ -64,13 +74,15 @@ export default function Home() {
 
   // handle submit
   const handleSubmit = (e) => {
-    if(user.email && user.password){
+    // sign up
+    if(newUser && user.email && user.password){
       const auth = getAuth();
       createUserWithEmailAndPassword(auth, user.email, user.password)
       .then(res => {
         const newUserInfo = {...user}
         newUserInfo.success = true;
         setUser(newUserInfo);
+        updateUser(user.name)
       })
         .catch((error) => {
           const newUserInfo = {...user}
@@ -79,7 +91,25 @@ export default function Home() {
           setUser(newUserInfo)
         });
     }
-
+    // sign in
+    if(!newUser && user.email && user.password){
+      const auth = getAuth();
+      signInWithEmailAndPassword(auth, user.email, user.password)
+        .then((res) => {
+          const { displayName, email } = res.user;
+          const currentUser = {
+            name: displayName,
+            email: email,
+            isLoggedIn: true
+          }
+          setUser(currentUser);
+        })
+        .catch((error) => {
+          const currentUser = {...user}
+          currentUser.error = 'Wrong Password !!!';
+          setUser(currentUser)
+        });
+    }
     e.preventDefault();
   }
   // on change
@@ -113,32 +143,38 @@ export default function Home() {
 
       <main className={styles.main}>
         {user.isLoggedIn ? <div>
-          <h2>Welcome Mr. {user.name}</h2>
+          {user.name && <h2>Welcome Mr. {user.name}</h2>}
           <h4>your email is {user.email}</h4>
           <button onClick={handleSignOut}>Sign Out</button>
         </div> :
-          <div>
+          <div style={{textAlign:'center'}}>
             <h1 className={styles.title}>
-              Welcome to <a href="https://nextjs.org">Next.js!</a>
+              Welcome to <a href="https://nextjs.org">Authentication</a>
             </h1>
             <br />
             {/* ==== testing state ==== */}
             {/* <p>Name: {user.name}</p>
             <p>Email: {user.email}</p>
             <p>Password: {user.password}</p> */}
-            <form onSubmit={handleSubmit}>
-              <input onBlur={handleChange} type="text" name="name" placeholder='Your Name' required />
-              <br />
+            <form onSubmit={handleSubmit} style={{textAlign:'center'}}>
+              {
+                newUser && <><input onBlur={handleChange} type="text" name="name" placeholder='Your Name' required />
+                  <br /></>
+              }
+              
               <input onBlur={handleChange} type="email" name="email" placeholder='email' required />
               <br />
               <input onBlur={handleChange} type="password" name="password" placeholder='password' required />
               <br />
-              <input type="submit" name="submit" value='submit' />
+              <input type="checkbox" onChange={()=> setNewUser(!newUser)} name="newUser" id="" />
+              <label htmlFor="uewUser">Create New Account</label>
+              <br />
+              <input type="submit" name="submit" value={newUser ? 'Sign Up' : 'Sign In'} />
             </form>
             <br />
             <p>or</p>
             <br />
-            {user.success ? <p style={{color: 'green'}}>Success !!!</p> : <p style={{color: 'red'}}>{user.error}</p>}
+            {user.success ? <p style={{color: 'green'}}>Successfully {!newUser ? 'logged in' : 'Created'} !!!</p> : <p style={{color: 'red'}}>{user.error}</p>}
             <button onClick={handleSignIn}>Sign In with google</button>
           </div>
         }
